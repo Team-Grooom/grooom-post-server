@@ -3,18 +3,82 @@ var router = express.Router();
 var Post = require('../models/Post');
 const authMiddleware = require('../middlewares/auth');
 
-// 댓글 작성
+/**
+ * @swagger
+ * tags:
+ *   name: Comment
+ *   description: 댓글 처리
+ * definitions:
+ *   Comment:
+ *     type: "object"
+ *     properties:
+ *       writer:
+ *         type: "string"
+ *       description:
+ *         type: "string"
+ *       parentComment:
+ *         type: "string"
+*/
+
+
+/**
+ * @swagger
+ * /comments/{id}:
+ *   post:
+ *     description: 댓글 작성
+ *     tags: [Comment]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     - name: "body"
+ *       in: "body"
+ *       description: "댓글 json"
+ *       required: true
+ *       schema:
+ *         $ref: "#/definitions/Comment"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.post('/:id', authMiddleware, async function(req, res) {
     var postId = req.params.id;
     var post = await Post.findOneAndUpdate({_id:postId}, {
         $push : {comments : req.body}
     }, {
         new : true
-    });
+    })
+    .populate({path:'writer', select:['nickName', 'location']})
+    .populate({path:'comments.writer', select:'nickName'});
     res.status(200).json(post);
 });
 
-// 댓글 삭제
+/**
+ * @swagger
+ * /comments/{id}/{commentId}:
+ *   delete:
+ *     description: 댓글 삭제
+ *     tags: [Comment]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     - name: "commentId"
+ *       in: "path"
+ *       description: "댓글 id"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.delete('/:id/:commentId', authMiddleware, async function(req, res) {
     var postId = req.params.id;
     var commentId = req.params.commentId;
@@ -44,7 +108,10 @@ router.delete('/:id/:commentId', authMiddleware, async function(req, res) {
     }
     post = await Post.findOneAndUpdate(queryParam1,queryParam2, {
         new : true
-    });
+    })
+    .populate({path:'writer', select:['nickName', 'location']})
+    .populate({path:'comments.writer', select:'nickName'});
+
     res.status(200).json(post);
 });
 

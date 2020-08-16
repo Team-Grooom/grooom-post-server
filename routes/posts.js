@@ -7,7 +7,67 @@ const Categories = require('../models/Categories');
 const authMiddleware = require('../middlewares/auth');
 const s3 = require('../config/s3');
 
-// 게시물 신고
+/**
+ * @swagger
+ * tags:
+ *   name: Post
+ *   description: 게시글 처리
+ * definitions:
+ *   Post:
+ *     type: "object"
+ *     properties:
+ *       title:
+ *         type: "string"
+ *       description:
+ *         type: "string"
+ *       writer:
+ *         type: "string"
+ *       category:
+ *         type: "string"
+ *       price:
+ *         type: "integer"
+ *         format: "int64"
+ *       state:
+ *         type: "integer"
+ *         format: "int64"
+ *       images:
+ *         type: "array"
+ *         items:
+ *           type: "string"
+ *       town:
+ *         type: "string"
+ *       townRange:
+ *         type: "integer"
+ *         format: "int64"
+ *       isSuggestable:
+ *         type: "boolean"
+*/
+
+
+/**
+ * @swagger
+ * /posts/report/{id}/{userId}:
+ *   post:
+ *     description: 게시글 신고
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       required: true
+ *       type: "string"
+ *     - name: "userId"
+ *       in: "path"
+ *       description: "유저 id"
+ *       required: true
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful reporting"
+ *     
+*/
 router.post('/report/:id/:userId', authMiddleware, async function(req, res) {
   var id = req.params.id;
   var userId = req.params.userId;
@@ -19,13 +79,39 @@ router.post('/report/:id/:userId', authMiddleware, async function(req, res) {
       $push : {reports : new ObjectId(userId)}, 
     }, {
       new : true
-    });
+    })
+    .populate({path:'writer', select:['nickName', 'location']})
+    .populate({path:'comments.writer', select:'nickName'});
     res.status(200).json(post);
   }
   // 신고 후의 처리?
 });
 
-// 관심상품 등록
+
+/**
+ * @swagger
+ * /posts/like/{id}/{userId}:
+ *   post:
+ *     description: 게시글 관심상품 등록
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       required: true
+ *       type: "string"
+ *     - name: "userId"
+ *       in: "path"
+ *       description: "유저 id"
+ *       required: true
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.post('/like/:id/:userId', authMiddleware, async function(req, res) {
   var id = req.params.id;
   var userId = req.params.userId;
@@ -42,7 +128,19 @@ router.post('/like/:id/:userId', authMiddleware, async function(req, res) {
   res.status(200).json({likes : post.likes});
 })
 
-// 인기검색어 순위 조회
+/**
+ * @swagger
+ * /posts/ranking:
+ *   get:
+ *     description: 인기검색어 조회
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.get('/ranking', async function(req, res) {
   var numOfQuery = 10; // 조회할 인기검색어 개수
   var items = [];
@@ -66,7 +164,24 @@ router.get('/ranking', async function(req, res) {
   res.status(200).json({result : items});
 });
 
-// 검색어 자동완성
+/**
+ * @swagger
+ * /posts/autocomplete:
+ *   get:
+ *     description: 게시글 자동완성 검색어
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "query"
+ *       in: "query"
+ *       description: "검색어"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.get('/autocomplete', async function(req, res) {
   var query = req.query.query;
   var items = [];
@@ -95,7 +210,24 @@ router.get('/autocomplete', async function(req, res) {
   res.status(200).json({result:items});
 });
 
-// 연관상품 조회
+/**
+ * @swagger
+ * /posts/relation/{id}:
+ *   get:
+ *     description: 게시글 연관상품 조회
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "카테고리 id"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.get('/relation/:id', async function(req, res) {
   var categoryId = req.params.id;
   var posts = await Post.aggregate([
@@ -108,6 +240,28 @@ router.get('/relation/:id', async function(req, res) {
   res.status(200).json(posts);
 });
 
+/**
+ * @swagger
+ * /posts/state/{id}:
+ *   post:
+ *     description: 게시글 상태 변경 -1(판매중), 0(예약), 1(판매완료)
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     - name: "state"
+ *       in: "query"
+ *       description: "게시글 상태 -1(판매중), 0(예약), 1(판매완료)"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.post('/state/:id', authMiddleware, function(req, res) {
   Post.findOneAndUpdate(
     {_id : new ObjectId(req.params.id)},
@@ -120,7 +274,28 @@ router.post('/state/:id', authMiddleware, function(req, res) {
   });
 });
 
-// 구매자 등록
+/**
+ * @swagger
+ * /posts/buyer/{id}/{userId}:
+ *   post:
+ *     description: 게시글 구매자 등록
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     - name: "userId"
+ *       in: "path"
+ *       description: "유저 id"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.post('/buyer/:id/:userId', authMiddleware, function(req, res) {
   Post.findOneAndUpdate(
     {_id : new ObjectId(req.params.id)},
@@ -133,7 +308,45 @@ router.post('/buyer/:id/:userId', authMiddleware, function(req, res) {
   });
 });
 
-// 게시물 조회
+
+/**
+ * @swagger
+ * /posts:
+ *   get:
+ *     description: 게시글 조회
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "town"
+ *       in: "query"
+ *       description: "조회 동네"
+ *       type: "string"
+ *     - name: "townRange"
+ *       in: "query"
+ *       description: "조회 동네 범위"
+ *       type: "string"
+ *     - name: "category"
+ *       in: "query"
+ *       description: "조회할 카테고리 id, 중첩 가능. ex) category=1&category=2&category=3"
+ *       type: "string"
+ *     - name: "scroll"
+ *       in: "query"
+ *       description: "스크롤 횟수. 0부터 시작. 1, 2, 3, ..."
+ *       type: "string"
+ *     - name: "maxNum"
+ *       in: "query"
+ *       description: "초기에 불러온 게시물 갯수. 맨 처음엔 0. 그 뒤엔 불러온 갯수 고정.(무한스크롤하면서 새로올라오는 중복게시물 skip하기 위함)"
+ *       type: "string"
+ *     - name: "query"
+ *       in: "query"
+ *       description: "검색어"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.get('/', async function(req, res){
   
   var town = req.query.town;
@@ -142,7 +355,7 @@ router.get('/', async function(req, res){
   categorys = Array.isArray(categorys) ? categorys : [categorys];
   var scroll = parseInt(req.query.scroll); 
   var maxNum = parseInt(req.query.maxNum); // 초기의 전체 게시물개수 skip에 사용
-  var query = req.query.query.trim();
+  var query = req.query.query;
   var townData = res.locals.util.loadJSON('./data/dong_data.json');
   var towns = res.locals.util.getNeighborhoodTownsBFS(townData, town, townRange);
 
@@ -192,7 +405,24 @@ router.get('/', async function(req, res){
 });
 
 
-// 게시물 상세 조회
+/**
+ * @swagger
+ * /posts/{id}:
+ *   get:
+ *     description: 게시글 상세 조회
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.get('/:id', async function(req, res) {
   var post = await Post.findOne({_id:new ObjectId(req.params.id)})
   .populate({path:'writer', select:['nickName', 'location']})
@@ -210,7 +440,26 @@ router.get('/:id', async function(req, res) {
   res.status(200).json(clonedPost);
 });
 
-// 게시물 생성
+/**
+ * @swagger
+ * /posts:
+ *   post:
+ *     description: 게시물 생성
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "body"
+ *       in: "body"
+ *       description: "게시글 json"
+ *       required: true
+ *       schema:
+ *         $ref: "#/definitions/Post"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.post('/', authMiddleware, async function(req, res) {
   images = req.body.images;
   if(images) {
@@ -221,7 +470,30 @@ router.post('/', authMiddleware, async function(req, res) {
 });
 
 
-// 게시물 수정
+/**
+ * @swagger
+ * /posts/{id}:
+ *   put:
+ *     description: 게시물 수정
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     - name: "body"
+ *       in: "body"
+ *       description: "게시글 json"
+ *       required: true
+ *       schema:
+ *         $ref: "#/definitions/Post"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.put('/:id', authMiddleware, async function(req, res) {
   if(req.body.images) {
     req.body.images = req.body.images.map(x => ({imageName:x}));
@@ -245,10 +517,30 @@ router.put('/:id', authMiddleware, async function(req, res) {
       }, function(err, data) {});
     }
   }
-  post = await Post.findOne({_id:new ObjectId(req.params.id)});
+  post = await Post.findOne({_id:new ObjectId(req.params.id)})
+  .populate({path:'writer', select:['nickName', 'location']})
+  .populate({path:'comments.writer', select:'nickName'});
   res.status(200).json(post);
 });
 
+/**
+ * @swagger
+ * /posts/{id}:
+ *   delete:
+ *     description: 게시물 삭제
+ *     tags: [Post]
+ *     produces:
+ *     - "application/json"
+ *     parameters:
+ *     - name: "id"
+ *       in: "path"
+ *       description: "게시글 id"
+ *       type: "string"
+ *     responses:
+ *       "200":
+ *         description: "successful operation"
+ *     
+*/
 router.delete('/:id', authMiddleware, async function(req, res) {
 
   var id = req.params.id;

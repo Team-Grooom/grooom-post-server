@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var {stream} = require('./config/winston');
 var morgan = require('morgan');
 var util = require('./util');
+const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
 
 // DB 설정
@@ -70,6 +71,9 @@ app.use(async function(req, res, next) {
     console.log(cats, "\ncategories created");
     next();
 });
+
+// swagger
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(require('./config/swaggerDoc')));
 
 // routes
 app.use('/', require('./routes/home'));

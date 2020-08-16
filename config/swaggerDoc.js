@@ -2,9 +2,9 @@ const swaggerJSDoc = require('swagger-jsdoc');
 
 var swaggerDefinition = {
     info : {
-        title : "groom-post-server",
+        title : "grooom-post-server",
         version : "1.0.0",
-        description : "groom-post-server API DOCs"
+        description : "grooom-post-server API DOCs"
     },
     host : "localhost:3000",
     basePath : "/"
@@ -12,7 +12,7 @@ var swaggerDefinition = {
 
 var options = {
     swaggerDefinition: swaggerDefinition,
-    apis : ['../routes/*.js']
+    apis : [__dirname + '/../routes/*.js']
 };
 
 const swaggerSpec = swaggerJSDoc(options);
