@@ -328,7 +328,7 @@ router.post('/buyer/:id/:userId', authMiddleware, function(req, res) {
  *       type: "string"
  *     - name: "category"
  *       in: "query"
- *       description: "조회할 카테고리 id, 중첩 가능. ex) category=1&category=2&category=3"
+ *       description: "조회할 카테고리 id, 중첩 가능. ex) category=1,2,3,4"
  *       type: "string"
  *     - name: "scroll"
  *       in: "query"
@@ -351,8 +351,7 @@ router.get('/', async function(req, res){
   
   var town = req.query.town;
   var townRange = parseInt(req.query.townRange);
-  var categorys = req.query.category;
-  categorys = Array.isArray(categorys) ? categorys : [categorys];
+  var categorys = req.query.category.trim().split(',');
   var scroll = parseInt(req.query.scroll); 
   var maxNum = parseInt(req.query.maxNum); // 초기의 전체 게시물개수 skip에 사용
   var query = req.query.query;

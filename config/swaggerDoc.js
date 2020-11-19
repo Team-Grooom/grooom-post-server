@@ -6,7 +6,8 @@ var swaggerDefinition = {
         version : "1.0.0",
         description : "grooom-post-server API DOCs"
     },
-    host : "localhost:3000",
+    // host : "localhost:3000",
+    host : "34.64.183.110:3000",
     basePath : "/"
 };
 
