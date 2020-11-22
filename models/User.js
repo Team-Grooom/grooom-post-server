@@ -1,12 +1,11 @@
 var mongoose = require('mongoose');
 
 var userSchema = new mongoose.Schema({
+  id:{type:String, required:true},
   nickName:{type:String, required:true},
-  phoneNum:{type:String},
-  location:{type:String, required:true},
-  rating:{type:String},
-  registerDate:{type:Date, default:Date.now},
-  isBlocked : {type:Boolean}
+  phoneNumber:{type:String},
+  place:{type:String, required:true},
+  rating:{type:Number}
 });
 
 var User = mongoose.model('User', userSchema);

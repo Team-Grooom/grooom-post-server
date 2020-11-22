@@ -52,7 +52,7 @@ router.post('/:id', authMiddleware, async function(req, res) {
     }, {
         new : true
     })
-    .populate({path:'writer', select:['nickName', 'location']})
+    .populate({path:'writer', select:['nickName', 'place']})
     .populate({path:'comments.writer', select:'nickName'});
     res.status(200).json(post);
 });
@@ -109,7 +109,7 @@ router.delete('/:id/:commentId', authMiddleware, async function(req, res) {
     post = await Post.findOneAndUpdate(queryParam1,queryParam2, {
         new : true
     })
-    .populate({path:'writer', select:['nickName', 'location']})
+    .populate({path:'writer', select:['nickName', 'place']})
     .populate({path:'comments.writer', select:'nickName'});
 
     res.status(200).json(post);

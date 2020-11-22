@@ -80,7 +80,7 @@ router.post('/report/:id/:userId', authMiddleware, async function(req, res) {
     }, {
       new : true
     })
-    .populate({path:'writer', select:['nickName', 'location']})
+    .populate({path:'writer', select:['nickName', 'place']})
     .populate({path:'comments.writer', select:'nickName'});
     res.status(200).json(post);
   }
@@ -424,7 +424,7 @@ router.get('/', async function(req, res){
 */
 router.get('/:id', async function(req, res) {
   var post = await Post.findOne({_id:new ObjectId(req.params.id)})
-  .populate({path:'writer', select:['nickName', 'location']})
+  .populate({path:'writer', select:['nickName', 'place']})
   .populate({path:'comments.writer', select:'nickName'})
   .sort('regDate, comments.regDate');
   if(!post) {
@@ -517,7 +517,7 @@ router.put('/:id', authMiddleware, async function(req, res) {
     }
   }
   post = await Post.findOne({_id:new ObjectId(req.params.id)})
-  .populate({path:'writer', select:['nickName', 'location']})
+  .populate({path:'writer', select:['nickName', 'place']})
   .populate({path:'comments.writer', select:'nickName'});
   res.status(200).json(post);
 });
